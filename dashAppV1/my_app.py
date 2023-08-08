@@ -97,4 +97,4 @@ def updated_dot_plot(selected_clouds):
 
 #Run app
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run(debug=False)
