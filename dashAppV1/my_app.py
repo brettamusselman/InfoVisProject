@@ -20,7 +20,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 
 #Import and read from csv cleaned Philadelphia Weather data from OpenWeather API
-df = pd.read_csv('dashAppV1\PhiladelphiaWeatherForInfoVis.csv')
+df = pd.read_csv(f'dashAppV1\PhiladelphiaWeatherForInfoVis.csv')
 df['date'] = pd.to_datetime(df['date'])
 
 lineChart = px.line(
