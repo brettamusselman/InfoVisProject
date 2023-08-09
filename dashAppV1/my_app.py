@@ -103,4 +103,4 @@ server = app.server
 
 #Run app
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(server=server)
