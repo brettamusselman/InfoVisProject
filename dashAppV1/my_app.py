@@ -11,9 +11,6 @@ import os
 import sys
 import plotly.express as px
 from dash import Dash, html, dcc, Input, Output, callback
-from flask import Flask
-
-server = Flask(__name__)
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -99,8 +96,6 @@ def updated_dot_plot(selected_clouds):
 
     return dotPlot
 
-server = app.server
-
 #Run app
 if __name__ == '__main__':
-    app.run_server(server=server)
+    app.run()
