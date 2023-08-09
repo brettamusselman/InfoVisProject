@@ -16,8 +16,6 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 
-application = app.server
-
 #Import and read from csv cleaned Philadelphia Weather data from OpenWeather API
 script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
 df = pd.read_csv('dashAppV1/PhiladelphiaWeatherForInfoVis.csv')
@@ -101,4 +99,4 @@ def updated_dot_plot(selected_clouds):
 
 #Run app
 if __name__ == '__main__':
-    application.run(debug=True, host='0.0.0.0', port='80')
+    app.run(debug=True, host='0.0.0.0', port='80')
