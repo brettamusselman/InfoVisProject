@@ -15,12 +15,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
 
       - name: Set up Python version
         uses: actions/setup-python@v1
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Create and start virtual environment
         run: |
@@ -28,7 +28,7 @@ jobs:
           source venv/bin/activate
       
       - name: Install dependencies
-        run: pip3 install --upgrade pip setuptools wheel && pip3 freeze > requirements.txt && pip3 install -r requirements.txt && pip3 install pandas && pip3 install dash
+        run: pip install -r requirements.txt
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
       
@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'BrettPractice'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_586FE4BE35A0477AA49A7BF1AD0D6E31 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_08D4E5CBD5F34C99A5B255E158F19ABF }}
