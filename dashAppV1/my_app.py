@@ -20,7 +20,7 @@ application = app.server
 
 #Import and read from csv cleaned Philadelphia Weather data from OpenWeather API
 script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
-df = pd.read_csv(f'{script_directory}\PhiladelphiaWeatherForInfoVis.csv')
+df = pd.read_csv(f'{script_directory}/PhiladelphiaWeatherForInfoVis.csv')
 df['date'] = pd.to_datetime(df['date'])
 
 lineChart = px.line(
