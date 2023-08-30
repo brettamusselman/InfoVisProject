@@ -10,7 +10,7 @@ import datetime
 import os
 import sys
 import plotly.express as px
-from dash import Dash, html, dcc, Input, Output, callback
+from dash import Dash, html, dcc, Input, Output, callback, dash_table
 from flask import Flask
 
 server = Flask(__name__)
