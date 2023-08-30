@@ -21,13 +21,22 @@ app = Dash(__name__, external_stylesheets=external_stylesheets)
 
 #Import and read from csv cleaned Philadelphia Weather data from OpenWeather API
 df = pd.read_csv(f'dashAppV1/PhiladelphiaWeatherForInfoVis.csv')
+df = df.drop('gust', axis=1)
 df['date'] = pd.to_datetime(df['date'])
+df['temp'] = df['temp'].round()
+df['feels_like'] = df['feels_like'].round()
+df['temp_max'] = df['temp_max'].round()
+df['temp_min'] = df['temp_min'].round()
 
-lineChart = px.line(
-        df, x="date", y="temp", color="description", labels={'date': 'Date', 'temp': 'Temperature (F)',
-                                                             'description': 'Description'},
-                                                     title="Temperature for Each Weather Condition"
+#df for line chart with only 5 most common conditions
+dfl = df.loc[df["description"].isin(["overcast clouds", "scattered clouds", "broken clouds", "few clouds", "clear sky"])]
+
+lineChart = px.line(dfl , x="date", y="temp", facet_col=dfl["description"].map(str.title),
+                    labels={'date': 'Date', 'temp': 'Temperature (F)',},
+                    title="Temperature for 5 Most Common Weather Conditions", hover_data={'temp': ':.0f'}
     )
+
+lineChart.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
 
 polarChart = px.scatter_polar(df, r='speed', theta='deg', color='pressure', labels={'speed': 'Wind Speed (meter/sec)',
                                                                                     'deg': 'Wind Direction (degrees)',
@@ -35,7 +44,47 @@ polarChart = px.scatter_polar(df, r='speed', theta='deg', color='pressure', labe
 
 scatterPlot = px.scatter(df, x='temp', y='feels_like', color='humidity', labels={'temp': ' Actual Temperature (F)',
                                                                                  'feels_like': 'Feels Like Temperature (F)',
-                                                                                 'humidity': 'Humidity (%)'}, color_continuous_scale='rdpu')
+                                                                                 'humidity': 'Humidity (%)'}, color_continuous_scale='rdpu',
+                         hover_data={'temp': ':.0f', 'feels_like': ':.0f'})
+
+def generate_numerical(df):
+    df_number = df.select_dtypes(include='number')
+    temp_record = {'Variable': [], 'Count': [], 'Mean': [], 'Std': [], 'Min': [], '25%': [], '50%': [], '75%': [], 'Max': []}
+    for column in df_number:
+        description = str(df_number[column].describe())
+        description = description.split()
+        temp_record['Variable'].append(column)
+        temp_record['Count'].append(round(float(description[1])))
+        temp_record['Mean'].append(round(float(description[3]),2))
+        temp_record['Std'].append(round(float(description[5]),2))
+        temp_record['Min'].append(round(float(description[7])))
+        temp_record['25%'].append(round(float(description[9])))
+        temp_record['50%'].append(round(float(description[11])))
+        temp_record['75%'].append(round(float(description[13])))
+        temp_record['Max'].append(round(float(description[15])))
+    
+    temp_df = pd.DataFrame.from_dict(temp_record)
+    return dash_table.DataTable(temp_df.to_dict('records'), [{'name': i, 'id': i} for i in temp_df.columns])
+
+def generate_categorical(df):
+    start = True
+    df_category = df.select_dtypes(exclude='number')
+    temp_record = {'Variable': [], 'Count': [], 'Unique': [], 'Top': [], 'Frequency': []}
+    for column in df_category:
+        if start == True:
+            start = False
+            pass
+        else:
+            description = str(df_category[column].describe())
+            description = description.split()
+            temp_record['Variable'].append(column)
+            temp_record['Count'].append(description[1])
+            temp_record['Unique'].append(description[3])
+            temp_record['Top'].append(description[5])
+            temp_record['Frequency'].append(description[7])
+    
+    temp_df = pd.DataFrame.from_dict(temp_record)
+    return dash_table.DataTable(temp_df.to_dict('records'), [{'name': i, 'id': i} for i in temp_df.columns])
 
 def generate_table(dataframe, max_rows=6):
     return html.Table([
@@ -133,38 +182,24 @@ app.layout = html.Div(children=[
         html.H1(children='Line Chart'),
         html.Div(children='Line Chart of Temperature Trends over Time by Description'),
         
-        html.Div(children='Click Description Legend to Filter Chart', style={'textAlign':'right'}),
+        html.Div(children='Use Zoom Feature to Explore Differences in Trends', style={'textAlign':'right'}),
 
         dcc.Graph(
             id='line-graph',
             figure=lineChart
             ),
         ], className='row'),
-    html.Div([
-        html.H1(children='Head of Table for Dataset'),
-        html.H6(children='Data from OpenWeather API from August 7, 2022 to July 30, 2023 for Philadelphia'),
-        generate_table(df)
-        ], className='row'),
-    html.Div([
-        html.H1(children='Statistical Description of Columns'),
+    html.Center(
         html.Div([
-            html.H3(children='Select Feature to Change Statistical Description'),
-            dcc.Dropdown(options=[{'label': 'Date', 'value': 'date'},
-                                  {'label': 'Temperature (F)', 'value': 'temp'},
-                                  {'label': 'Feels Like Temperature (F)', 'value': 'feels_like'},
-                                  {'label': 'Pressure (hPa)', 'value': 'pressure'},
-                                  {'label': 'Humidity (%)', 'value': 'humidity'},
-                                  {'label': 'Minimum Temperature (F)', 'value': 'temp_min'},
-                                  {'label': 'Maximum Temperature (F)', 'value': 'temp_max'},
-                                  {'label': 'Wind Speed (meter/sec)', 'value': 'speed'},
-                                  {'label': 'Wind Direction (deg)', 'value': 'deg'},
-                                  {'label': 'Gust', 'value': 'gust'},
-                                  {'label': 'Clouds (%)', 'value': 'clouds'},
-                                  {'label': 'Weather ID', 'value': 'id'},
-                                  {'label': 'Main Description', 'value': 'main'},
-                                  {'label': 'Weather Description (more in-depth)', 'value': 'description'},
-                                  {'label': 'Icon', 'value': 'icon'},],value='date',id='feature-dropdown'),
-            html.Div(id='statistical-descriptions',),
+            html.H1(children='Head of Table for Dataset'),
+            html.H6(children='Data from OpenWeather API from August 7, 2022 to July 30, 2023 for Philadelphia'),
+            generate_table(df)
+            ], className='row'),),
+    html.Div([
+        html.Center(html.H1(children='Statistical Description of Columns')),
+        html.Div([
+            html.Div([html.H3(children='Description of Numerical Columns'), generate_numerical(df)], className='six columns'),
+            html.Div([html.H3(children='Description of Categorical Columns'), generate_categorical(df)], className='six columns'),
             ])
         ], className ='row'),
 ])
@@ -180,7 +215,8 @@ def updated_dot_plot(selected_clouds):
     dotPlot = px.scatter(filtered_df, x='temp', y=filtered_df['date'].dt.month, labels={'temp': 'Temperature (F)',
                                                                                         'y': 'Month (#)',
                                                                                         'humidity': 'Humidity (%)'},
-                                                                                        color='humidity')
+                                                                                        color='humidity',
+                         hover_data={'temp': ':.0f'})
 
     dotPlot.update_layout(transition_duration=500)
 
@@ -194,20 +230,11 @@ def updated_box_plot(start_date, end_date):
     filtered_df = df[df.date >= start_date]
     filtered_df = filtered_df[df.date <= end_date]
     
-    boxPlot = px.box(filtered_df, y='temp', labels={'temp':'Temperature (F)'})
+    boxPlot = px.box(filtered_df, y='temp', labels={'temp':'Temperature (F)'}, hover_data={'temp': ':.0f'})
     
     boxPlot.update_layout(transition_duration=500)
 
     return boxPlot
-
-@callback(
-    Output('statistical-descriptions', 'children'),
-    Input('feature-dropdown', 'value')
-    )
-def updated_stat_description(value):
-    described = df[value].describe()
-    
-    return f'Statistical Description of {value}: {described}'
 
 server = app.server
 
